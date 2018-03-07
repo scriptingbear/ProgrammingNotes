@@ -1,0 +1,75 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil\fcharset0 Courier New;}{\f2\fnil\fcharset2 Symbol;}}
+{\*\generator Riched20 10.0.16299}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\qc\ul\f0\fs40\lang9 Steps to bind an SQL data source to a datagridview control\par
+
+\pard\sa200\sl276\slmult1\ulnone\fs32\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b Create connection string to the SQL Server database\b0 , in this case the local instance of SQL Server express. At minimum we must specify three properties in order to connect to the local SQL Server instance, they are:\par
+
+\pard 
+{\pntext\f0 1.\tab}{\*\pn\pnlvlbody\pnf0\pnindent0\pnstart1\pndec{\pntxta.}}
+\fi-360\li1080\sa200\sl276\slmult1 DataSource, which is denoted simply by "." for the local instance of SQL Server\par
+{\pntext\f0 2.\tab}Initial Catalog, which is the name of the specific database (collection of tables) schema, such as the AdventureWorks database or the Pubs database\par
+{\pntext\f0 3.\tab}Integrated Security, which for our purposes will be set to True\par
+
+\pard\sa200\sl276\slmult1 So if we want to connect to a given database, such as Pubs, on the local instance of SQL Server, the connection string will look like\par
+\f1\fs24 string connectionString = "DataSource=.; Initial Catalog=Pubs; Integrated Security=True";\f0\fs32\par
+Notice that the connection string is a semi-colon delimited list of items.\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b Compose an SQL SELECT statement that returns one or more rows\b0 .  Let's select all the columns from the Authors table in the Pubs database, for example.\par
+
+\pard\li720\sa200\sl276\slmult1\f1\fs24 string sql = "SELECT * FROM AUTHORS ORDER BY LASTNAME";\f0\fs32\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 Declare a variable to establish a connection to SQL Server. We have specified the connection parameters in the first step above but that is not what connects our app to an instance of SQL Server. It is the specification or parameters that we use to configure an programmatic connection to the database.\par
+
+\pard\li720\sa200\sl276\slmult1\f1\fs24 SqlConnection connection = new SqlConnection(connectionString);\f0\fs32\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b Create a data adapter to talk to SQL Server\b0 . After connecting to SQL Server as we have done above, we need a data adapter object that communicates instructions, such as SQL statements, to SQL Server and receives responses from SQL Server, in the form of data that our application can use.\par
+
+\pard\li720\sa200\sl276\slmult1\f1\fs24 SqlDataAdapter dataadapter = new SqlDataAdapter(sql, connection);\f0\fs32\par
+Notice that when configuring a data adapter object we need to supply two items: 1.) a string containing an SQL SELECT statement and 2.) a connection object that was configured with the necessary parameters found in a connection string, as shown above.\par
+Note also that a data adapter object can talk to different sources of data, not just SQL Server. We will see shortly that the data adapter we just created to talk to the local instance of SQL Server can also be used to "talk" to an in memory data store, such as a DataSet object, which we are going to create in the next step.\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b Create a DataSet object to hold an in memory copy of the data retrieved from SQL Server\b0 , which will in turn be used to populate the datagridview control. Note that once data from SQL Server has been placed in the DataSet object, we will disconnect from SQL Server altogether for improved performance of our application. In a networked environment where we may deal with potentially very large datasets, this becomes very important. We don't need to maintain a connection to SQL Server after it has returned the data we requested. If at some later point we need to push an update back to SQL Server, such as if we add or delete some records from the DataSet object, we will establish a new connection to SQL Server.\par
+
+\pard\li720\sa200\sl276\slmult1 Note that the DataSet object is a local data store. It can contain data from one or more tables, depending on what we ask SQL Server to give us.\par
+\f1\fs24 DataSet ds = new DataSet();\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b\f0\fs32 Open the connection to SQL Server \b0 so that we can send SQL statements to it and receive the results of those statements back into our application.\par
+
+\pard\li720\sa200\sl276\slmult1\f1\fs24 connection.Open();\f0\fs32\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b Fill the DataSet object with the data returned from SQL Server\b0 . The SQL SELECT statement should return one or more rows from the table. Copies of these rows will be added to the DataSet object by using, once again, the Data Adapter object we created earlier. As mentioned before, the task of the Data Adapter is to "talk" to SQL Server (or another datasource), asking it for data and receiving that data from SQL Server so it can be used in our application, in this case by filling up or populating a DataSet object.\par
+
+\pard\li720\sa200\sl276\slmult1\f1\fs24 dataadapter.Fill(ds, "Authors_table");\fs32\par
+\f0 The first argument of the Fill() method is the variable we are using to represent the DataSet object we declared above. The second parameter is the name we assign to the set of rows returned into our application by SQL Server. We queried SQL Sever for all the columns from the AUTHORS table in the Pubs database. Locally, we will refer to this set of rows as "Authors_table".\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b Close the connection to SQL Server \b0 since we don't need to be connected to it now that we have downloaded the data that we need. As mentioned above, this will improve performance, especially in a network environment and when we are dealing with a substantial number of rows\par
+
+\pard\li720\sa200\sl276\slmult1\f1\fs24 connection.Close();\fs32\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b\f0 Set the DataSource property of the DataGridView control to the DataSet object\b0 . This connects the DataGridView control to the DataSet, roughly analogous to how we connected to SQL Server above. \par
+
+\pard\li720\sa200\sl276\slmult1\f1\fs24 dataGridView1.DataSource = ds;\f0\fs32\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1\b Set the DataMember property of the DataGridView control to one of the tables in the DataSet object\b0 . This is the final step in the process. It is what will cause the DataGridView control to display the rows of data retrieved from SQL Server.\par
+
+\pard\li720\sa200\sl276\slmult1\f1\fs24 dataGridView1.DataMember = "Authors_table";\f0\fs32\par
+
+\pard{\pntext\f2\'B7\tab}{\*\pn\pnlvlblt\pnf2\pnindent0{\pntxtb\'B7}}\fi-360\li720\sa200\sl276\slmult1 The steps to bind an OLEDB datasource (like Microsoft Access) to a DataGridView control are essentially the same as described above. Just use OleDbConnection, OleDbAdapter instead of SQLConnection and SQLDataAdapter. The connection string for an OLEDB datasource will be different from SQL connection string shown above. For example, if we have an Access database named Pubs, our connection string might look like this:\par
+
+\pard\li720\sa200\sl276\slmult1\f1\fs24 string connetionString = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=Pubs.mdb file;"\par
+
+\pard\sa200\sl276\slmult1\f0\fs32\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+\par
+}
+ 
